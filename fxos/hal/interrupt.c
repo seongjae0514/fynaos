@@ -14,6 +14,14 @@ struct _IDT_ENTRY {
 
 typedef struct _IDT_ENTRY IDT_ENTRY, *PIDT_ENTRY;
 
+struct _IDTR
+{
+    UINT16 Limit;
+    UINT64 Base;
+} __attribute__((packed));
+
+typedef struct _IDTR IDTR, *PIDTR;
+
 IDT_ENTRY Idt[IDT_ENTRIES_COUNT];
 
 VOID
@@ -102,4 +110,8 @@ HalInitializeIdt(
             DefaultAttributes
         );
     }
+
+    IDTR Idtr = { .Base = (UINT64)Idt, .Limit = sizeof(Idt) - 1 };
+
+    asm volatile ("lidt %0"::"m"(Idtr));
 }

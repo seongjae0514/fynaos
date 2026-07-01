@@ -31,8 +31,23 @@ typedef struct _KINTERRUPT_FRAME {
     UINT64 RFLAGS;
     UINT64 RSP;
     UINT64 SS;
-} KINTERRUPT_FRAME;
+} KINTERRUPT_FRAME, *PKINTERRUPT_FRAME;
 
+KRESULT
+KeInitializeInterrupts(
+    VOID
+    );
 
+NORETURN
+VOID
+KiDispatchInterrupt(
+    PKINTERRUPT_FRAME InterruptFrame
+    );
+
+NORETURN
+VOID
+KiExitInterruptService(
+    PKINTERRUPT_FRAME InterruptFrame
+    );
 
 #endif

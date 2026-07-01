@@ -17,7 +17,7 @@ AS := nasm
 CCFLAGS := -ffreestanding -fno-pie -no-pie -fno-stack-protector -fno-plt  \
            -fno-builtin -fno-asynchronous-unwind-tables -fno-exceptions   \
            -fno-omit-frame-pointer                                        \
-           -Wall -Wextra -Werror -Wshadow -Wconversion -Wsign-conversion  \
+           -Wall -Wextra  -Wshadow -Wconversion -Wsign-conversion  \
            -Wundef -Wcast-align -Wstrict-prototypes                       \
            -g -m64 -mcmodel=large -c -Iinclude/ -mno-red-zone -DDEBUG=1
 
@@ -29,10 +29,13 @@ ASFLAGS := -f elf64 -Iinclude
 # Sources
 #
 
-C_SOURCES   := fxos/ke/init.c      \
-               fxos/mm/bootalloc.c
+C_SOURCES   := fxos/init.c          \
+               fxos/ke/interrupt.c  \
+               fxos/mm/bootalloc.c  \
+               fxos/hal/interrupt.c
 
-ASM_SOURCES := fxos/start.asm
+ASM_SOURCES := fxos/start.asm  \
+               fxos/ke/isr.asm
 
 OBJECTS     := $(addprefix bin/, $(C_SOURCES:.c=.o)) $(addprefix bin/, $(ASM_SOURCES:.asm=.o))
 

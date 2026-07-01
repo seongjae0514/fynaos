@@ -17,6 +17,7 @@ section .text
     global KiExitInterruptService
     global KiCommonInterruptStub
     global KiDefaultInterruptStub
+    extern KiDispatchInterrupt
 
 ;
 ; NORETURN
@@ -38,6 +39,7 @@ KiExitInterruptService:
 ;     InterruptFrame - An interrupt frame of current interrupt
 ;
 ;--
+    mov rsp, rdi
     pop r15
     pop r14
     pop r13

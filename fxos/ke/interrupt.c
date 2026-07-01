@@ -84,3 +84,20 @@ KeInitializeInterrupts(
 
     return KRESULT_SUCCESS;
 }
+
+NORETURN
+VOID
+KiDispatchInterrupt(
+    PKINTERRUPT_FRAME InterruptFrame
+    )
+{
+    switch (InterruptFrame->Vector)
+    {
+    case 3:
+        KiExitInterruptService(InterruptFrame);
+
+    default:
+        HalHaltSystem();
+
+    }
+}
