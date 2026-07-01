@@ -36,7 +36,9 @@ C_SOURCES   := fxos/init.c          \
                fxos/hal/serial.c    \
                fxos/hal/port.c      \
                fxos/rtl/printf.c    \
-               fxos/rtl/string.c
+               fxos/rtl/string.c    \
+               fxos/kd/kd.c         \
+               fxos/ke/panic.c
 
 ASM_SOURCES := fxos/start.asm  \
                fxos/ke/isr.asm

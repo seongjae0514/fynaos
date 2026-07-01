@@ -27,18 +27,18 @@ RtlpParseSingleFormat(
 
     Format++;
 
-    while (*Format && !IS_DIGIT_EXCEPT_ZERO(*Format))
+    while (*Format && (*Format == '-' || *Format == '0'))
     {
         if (*Format == '-')
         {
             FormatInfo->Flags |= FORMAT_INFO_FLAG_LEFTALIGN;
+            Format++;
         }
         else if (*Format == '0')
         {
             FormatInfo->Flags |= FORMAT_INFO_FLAG_ZEROPAD;
+            Format++;
         }
-
-        Format++;
     }
 
     while (*Format && IS_DIGIT(*Format))
@@ -122,7 +122,7 @@ RtlpPrintSingleFormat(
         else
         {
             RtlUnsignedIntegerToString64(
-                (INT64)va_arg(Arg, unsigned int),
+                (UINT64)va_arg(Arg, unsigned int),
                 Temp,
                 'i'
                 );
@@ -149,7 +149,7 @@ RtlpPrintSingleFormat(
         else
         {
             RtlUnsignedIntegerToString64(
-                (INT64)va_arg(Arg, unsigned int),
+                (UINT64)va_arg(Arg, unsigned int),
                 Temp,
                 'x'
                 );
@@ -176,7 +176,7 @@ RtlpPrintSingleFormat(
         else
         {
             RtlUnsignedIntegerToString64(
-                (INT64)va_arg(Arg, unsigned int),
+                (UINT64)va_arg(Arg, unsigned int),
                 Temp,
                 'X'
                 );
@@ -200,8 +200,12 @@ RtlpPrintSingleFormat(
 
     SIZE Length = RtlGetStringLength(Temp);
     SIZE Padding;
-    
-    if (Length > Info->PaddingLength)
+
+    if (!Info->PaddingLength)
+    {
+        Padding = 0;
+    }
+    else if (Length > Info->PaddingLength)
     {
         Padding = 0;
     }
@@ -218,7 +222,7 @@ RtlpPrintSingleFormat(
         {
             *Buffer++ = *p++;
 
-            if (Buffer >= Limit)
+            if (Buffer >= Limit - 1)
             {
                 return NULL;
             }
@@ -228,7 +232,7 @@ RtlpPrintSingleFormat(
         {
             *Buffer++ = ' ';
 
-            if (Buffer >= Limit)
+            if (Buffer >= Limit - 1)
             {
                 return NULL;
             }
@@ -242,7 +246,7 @@ RtlpPrintSingleFormat(
         {
             *Buffer++ = Info->Flags & FORMAT_INFO_FLAG_ZEROPAD ? '0' : ' ';
 
-            if (Buffer >= Limit)
+            if (Buffer >= Limit - 1)
             {
                 return NULL;
             }
@@ -252,7 +256,7 @@ RtlpPrintSingleFormat(
         {
             *Buffer++ = *p++;
 
-            if (Buffer >= Limit)
+            if (Buffer >= Limit - 1)
             {
                 return NULL;
             }
@@ -272,7 +276,7 @@ RtlVStringPrintf(
 {
     PCSTR Limit = Buffer + Length;
 
-    while (Buffer < Limit && *Format)
+    while (Buffer < Limit - 1 && *Format)
     {
         if (*Format == '%')
         {
