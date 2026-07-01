@@ -32,7 +32,9 @@ ASFLAGS := -f elf64 -Iinclude
 C_SOURCES   := fxos/init.c          \
                fxos/ke/interrupt.c  \
                fxos/mm/bootalloc.c  \
-               fxos/hal/interrupt.c
+               fxos/hal/interrupt.c \
+               fxos/hal/serial.c    \
+               fxos/hal/port.c
 
 ASM_SOURCES := fxos/start.asm  \
                fxos/ke/isr.asm
