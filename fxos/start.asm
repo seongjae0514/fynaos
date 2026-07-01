@@ -210,5 +210,6 @@ _start_higherhalf:
     ; Jump to the C kernel source
     ;
 
+    mov rdi, [MultibootInformation]
     jmp KiSystemStartup
 
