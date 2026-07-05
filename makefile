@@ -56,7 +56,8 @@ C_SOURCES   := init/init.c        \
                kernel/panic.c     \
                mm/mm.c            \
                rtl/string.c       \
-               kd/kd.c
+               kd/kd.c            \
+               mm/pool.c
 
 ASM_SOURCES := boot/boot.asm            \
                kernel/interrupt_asm.asm

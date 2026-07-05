@@ -35,7 +35,9 @@ void kd_assert(boolean_t cond, const char *exp,
 
 void kd_enterproc(const char *fn)
 {
+#ifdef PRINT_CALL_STACK
     DPRINT("Entering procedure: %s\n", fn);
+#endif
 
     if (top < CALL_STACK_SIZE)
     {
@@ -50,7 +52,9 @@ void kd_enterproc(const char *fn)
 
 void kd_leaveproc(void)
 {
+#ifdef PRINT_CALL_STACK
     DPRINT("Leaving procedure: %s\n", call_stack[top]);
+#endif
 
     if (top < 0)
     {

@@ -83,6 +83,5 @@ __noreturn void kmain(uintptr_t info)
         / multiboot2_mmap->entry_size));
 
     halt_cpu_forever();
-
     LEAVEPROC();
 }

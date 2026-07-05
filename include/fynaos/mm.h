@@ -4,6 +4,7 @@
 #include <fynaos/types.h>
 
 #define KERNEL_ADDRESS_BASE 0xFFFF800000000000
+#define PAGE_SIZE           4096
 
 #define PFN_RESERVED        0x00000001
 
@@ -51,5 +52,13 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt);
 void alloc_specific_page(phys_addr_t addr);
 void free_page(phys_addr_t addr);
 phys_addr_t alloc_page(void);
+void *phys_to_virt(phys_addr_t phys);
+void zero_page(phys_addr_t page);
+void kfree(void *addr);
+void *kmalloc(size_t len);
+boolean_t init_pool(void);
+boolean_t map_page(struct mm *mm, phys_addr_t frame, virt_addr_t page, uint32_t attr);
+phys_addr_t unmap_page(struct mm *mm, virt_addr_t page);
+void map_kernel_for_user_mm(struct mm *mm);
 
 #endif

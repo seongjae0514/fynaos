@@ -221,6 +221,11 @@ phys_addr_t alloc_page(void)
     return (phys_addr_t)(pfn - pfn_database) << 12;
 }
 
+void zero_page(phys_addr_t page)
+{
+    memset((void*)(page + KERNEL_ADDRESS_BASE), 0, 0x1000);
+}
+
 void free_page(phys_addr_t addr)
 {
     ENTERPROC();
@@ -445,7 +450,117 @@ kresult_t init_memory(struct multiboot2_mmap_entry *entries, unsigned int count)
     init_phys(entries, count);
     init_kernel_mm(entries, count);
     alloc_pages_used_by_kernel();
+    init_pool();
 
     LEAVEPROC();
     return 0;
+}
+
+boolean_t map_page(struct mm *mm, phys_addr_t frame, virt_addr_t page, uint32_t attr)
+{
+    ENTERPROC();
+
+    page_index_t pml4_index = PML4_INDEX(page);
+    page_index_t pdpt_index = PDPT_INDEX(page);
+    page_index_t pd_index   = PD_INDEX(page);
+    page_index_t pt_index   = PT_INDEX(page);
+
+    phys_addr_t *ppml4 = phys_to_virt(mm->pml4);
+
+    if (!(ppml4[pml4_index] & PAGE_PRESENT))
+    {
+        zero_page(ppml4[pml4_index] = alloc_page());
+        ppml4[pml4_index] |= PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
+    }
+
+    phys_addr_t *ppdpt = phys_to_virt(ppml4[pml4_index] & ~0xFFFULL);
+
+    if (!(ppdpt[pdpt_index] & PAGE_PRESENT))
+    {
+        zero_page(ppdpt[pdpt_index] = alloc_page());
+        ppdpt[pdpt_index] |= PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
+    }
+
+    phys_addr_t *ppd = phys_to_virt(ppdpt[pdpt_index] & ~0xFFFULL);
+
+    if (!(ppd[pd_index] & PAGE_PRESENT))
+    {
+        zero_page(ppd[pd_index] = alloc_page());
+        ppd[pd_index] |= PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
+    }
+
+    phys_addr_t *ppt = phys_to_virt(ppd[pd_index] & ~0xFFFULL);
+
+    if (ppt[pt_index] & PAGE_PRESENT)
+    {
+        LEAVEPROC();
+        return FALSE;
+    }
+
+    ppt[pt_index] = frame | attr;
+
+    LEAVEPROC();
+    return TRUE;
+}
+
+phys_addr_t unmap_page(struct mm *mm, virt_addr_t page)
+{
+    ENTERPROC();
+
+    page_index_t pml4_index = PML4_INDEX(page);
+    page_index_t pdpt_index = PDPT_INDEX(page);
+    page_index_t pd_index   = PD_INDEX(page);
+    page_index_t pt_index   = PT_INDEX(page);
+
+    phys_addr_t *ppml4 = phys_to_virt(mm->pml4);
+
+    if (!(ppml4[pml4_index] & PAGE_PRESENT))
+    {
+        LEAVEPROC();
+        return INVALID_PHYSICAL_ADDRESS;
+    }
+
+    phys_addr_t *ppdpt = phys_to_virt(ppml4[pml4_index] & ~0xFFFULL);
+
+    if (!(ppdpt[pdpt_index] & PAGE_PRESENT))
+    {
+        LEAVEPROC();
+        return INVALID_PHYSICAL_ADDRESS;
+    }
+
+    phys_addr_t *ppd = phys_to_virt(ppdpt[pdpt_index] & ~0xFFFULL);
+
+    if (!(ppd[pd_index] & PAGE_PRESENT))
+    {
+        LEAVEPROC();
+        return INVALID_PHYSICAL_ADDRESS;
+    }
+
+    phys_addr_t *ppt = phys_to_virt(ppd[pd_index] & ~0xFFFULL);
+
+    if (!(ppt[pt_index] & PAGE_PRESENT))
+    {
+        LEAVEPROC();
+        return INVALID_PHYSICAL_ADDRESS;
+    }
+
+    phys_addr_t phys = ppt[pt_index] & ~0xFFFULL;
+
+    ppt[pt_index] = 0ULL;
+
+    LEAVEPROC();
+    return phys;
+}
+
+void map_kernel_for_user_mm(struct mm *mm)
+{
+    ENTERPROC();
+
+    phys_addr_t *user_pml4   = phys_to_virt(mm->pml4);
+    phys_addr_t *kernel_pml4 = phys_to_virt(kernel_mm.pml4);
+
+    user_pml4[PML4_INDEX(KERNEL_ADDRESS_BASE)] =
+        kernel_pml4[PML4_INDEX(KERNEL_ADDRESS_BASE)];
+
+    LEAVEPROC();
 }
