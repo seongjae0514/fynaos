@@ -1,5 +1,6 @@
 #include <fynaos/types.h>
 #include <fynaos/cpu.h>
+#include <fynaos/kd.h>
 
 #define COM1_DATA             (uint16_t)0x3F8
 #define COM1_INTERRUPT_ENABLE (uint16_t)0x3F9
@@ -11,6 +12,7 @@
 
 void init_serial(void)
 {
+    ENTERPROC();
     outb(COM1_INTERRUPT_ENABLE, (uint8_t)0);
     outb(COM1_LINE_CONTROL,     (uint8_t)0x80);
     outb(COM1_DATA,             (uint8_t)0x01);
@@ -18,6 +20,7 @@ void init_serial(void)
     outb(COM1_LINE_CONTROL,     (uint8_t)0x03);
     outb(COM1_FIFO_CONTROL,     (uint8_t)0xC7);
     outb(COM1_MODEM_CONTROL,    (uint8_t)0x0B);
+    LEAVEPROC();
 }
 
 void write_serial(char ch)

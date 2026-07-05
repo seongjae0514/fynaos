@@ -20,7 +20,7 @@
 #define PAGE_PCD          (1ULL << 4)   // Page Cache Disable
 #define PAGE_ACCESSED     (1ULL << 5)   // Accessed
 #define PAGE_DIRTY        (1ULL << 6)   // Dirty (PTE only)
-#define PAGE_HUGE         (1ULL << 6)
+#define PAGE_HUGE         (1ULL << 7)
 #define PAGE_PAT          (1ULL << 7)   // PAT (PTE), PS (PDE/PDPTE)
 #define PAGE_GLOBAL       (1ULL << 8)   // Global (PTE only)
 #define PAGE_NO_EXECUTE   (1ULL << 63)  // NX

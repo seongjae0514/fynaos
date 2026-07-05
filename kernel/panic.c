@@ -1,8 +1,11 @@
 #include <fynaos/kernel.h>
+#include <fynaos/kd.h>
 #include <fynaos/cpu.h>
 
 __noreturn void kernel_panic(const char *msg, unsigned int flags)
 {
+    ENTERPROC();
+
     disable_interrupts();
 
     if (!(flags & PANIC_FLAG_SILENCE))
@@ -18,8 +21,10 @@ __noreturn void kernel_panic(const char *msg, unsigned int flags)
     }
     else
     {   
-        kprintf("%s", msg);
+        kprintf("kernel panic: %s\n", msg);
     }
 
     halt_cpu_forever();
+
+    LEAVEPROC();
 }

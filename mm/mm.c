@@ -11,6 +11,7 @@
 #include <fynaos/string.h>
 #include <fynaos/symbols.h>
 #include <multiboot2.h>
+#include <fynaos/kd.h>
 
 static struct pfn        *pfn_database     = NULL;
 static size_t             pfn_database_len = 0;
@@ -22,27 +23,37 @@ static struct boot_alloc  boot_allocator   = { 0 };
 
 static void init_boot_allocator(phys_addr_t base, size_t len)
 {
+    ENTERPROC();
     boot_allocator.begin = base;
     boot_allocator.tail  = base;
     boot_allocator.limit = base + len;
+    LEAVEPROC();
 }
 
 static virt_addr_t alloc_boot_memory(size_t len, size_t align)
 {
+    ENTERPROC();
+
     phys_addr_t addr = _align_up(boot_allocator.tail, align);
 
     if (addr + len > boot_allocator.limit)
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
     boot_allocator.tail = addr + len;
 
+    memset((void*)(addr + KERNEL_ADDRESS_BASE), 0, len);
+
+    LEAVEPROC();
     return addr + KERNEL_ADDRESS_BASE;
 }
 
 static void alloc_pfn_database(phys_addr_t limit)
 {
+    ENTERPROC();
+
     pfn_database_len = (limit >> 12);
     pfn_database = (struct pfn*)alloc_boot_memory(pfn_database_len * sizeof(struct pfn), 8);
 
@@ -52,10 +63,14 @@ static void alloc_pfn_database(phys_addr_t limit)
     }
 
     memset(pfn_database, 0, pfn_database_len * sizeof(struct pfn));
+
+    LEAVEPROC();
 }
 
 static void reserve_pfn_region(phys_addr_t addr, phys_addr_t limit)
 {
+    ENTERPROC();
+
     page_index_t begin = addr >> 12;
     page_index_t end   = limit >> 12;
 
@@ -68,10 +83,14 @@ static void reserve_pfn_region(phys_addr_t addr, phys_addr_t limit)
 
         pfn_database[begin].flags |= PFN_RESERVED;
     }
+
+    LEAVEPROC();
 }
 
 static void init_free_list(void)
 {
+    ENTERPROC();
+
     struct pfn *head = NULL;
     struct pfn *tail = NULL;
 
@@ -98,6 +117,8 @@ static void init_free_list(void)
     }
 
     free_list_head = head;
+
+    LEAVEPROC();
 }
 
 /*
@@ -108,6 +129,8 @@ static void init_free_list(void)
  */
 static void init_phys(struct multiboot2_mmap_entry *entries, size_t count)
 {
+    ENTERPROC();
+
     /*
      * Initialize boot allocator
      */
@@ -174,12 +197,17 @@ static void init_phys(struct multiboot2_mmap_entry *entries, size_t count)
      */
 
     init_free_list();
+
+    LEAVEPROC();
 }
 
 phys_addr_t alloc_page(void)
 {
+    ENTERPROC();
+
     if (!free_list_head)
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
@@ -189,11 +217,14 @@ phys_addr_t alloc_page(void)
     pfn->refcount++;
     pfn->next = NULL;
     
+    LEAVEPROC();
     return (phys_addr_t)(pfn - pfn_database) << 12;
 }
 
 void free_page(phys_addr_t addr)
 {
+    ENTERPROC();
+
     page_index_t i = addr >> 12;
 
     if (i >= pfn_database_len)
@@ -215,10 +246,14 @@ void free_page(phys_addr_t addr)
         pfn->next = free_list_head;
         free_list_head = pfn;
     }
+
+    LEAVEPROC();
 }
 
 void alloc_specific_page(phys_addr_t addr)
 {
+    ENTERPROC();
+
     struct pfn *pfn = &pfn_database[addr >> 12];
 
     if (pfn->refcount == 0)
@@ -256,6 +291,8 @@ void alloc_specific_page(phys_addr_t addr)
     /* Increase refcount */
 
     pfn->refcount++;
+
+    LEAVEPROC();
 }
 
 void *phys_to_virt(phys_addr_t phys)
@@ -274,6 +311,8 @@ void *phys_to_virt(phys_addr_t phys)
  */
 phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
 {
+    ENTERPROC();
+
     if (!mm)
     {
         if (virt < KERNEL_ADDRESS_BASE)
@@ -281,6 +320,7 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
             return INVALID_PHYSICAL_ADDRESS;
         }
 
+        LEAVEPROC();
         return virt - KERNEL_ADDRESS_BASE;
     }
 
@@ -295,6 +335,7 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
 
     if (!(pml4e & PAGE_PRESENT))
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
@@ -303,6 +344,7 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
     
     if (!(pdpte & PAGE_PRESENT))
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
@@ -311,6 +353,7 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
     
     if (!(pde & PAGE_PRESENT))
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
@@ -319,11 +362,13 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
 
     if (!(pte & PAGE_PRESENT))
     {
+        LEAVEPROC();
         return INVALID_PHYSICAL_ADDRESS;
     }
 
     phys_addr_t phys = (pte & ~0xFFFULL) + offset;
     
+    LEAVEPROC();
     return phys;
 }
 
@@ -339,10 +384,12 @@ phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt)
  */
 static void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count)
 {
+    ENTERPROC();
+
     kernel_mm.pml4 = virt_to_phys(NULL, alloc_boot_memory(4096, 4096));
 
     phys_addr_t *ppml4e = phys_to_virt(kernel_mm.pml4 + 8 * PML4_INDEX(KERNEL_ADDRESS_BASE));
-    *ppml4e = virt_to_phys(NULL, alloc_boot_memory(4096, 4096));
+    *ppml4e = virt_to_phys(NULL, alloc_boot_memory(4096, 4096)) | PAGE_PRESENT | PAGE_WRITABLE;
 
     phys_addr_t  phys_pdpt = *ppml4e;
     phys_addr_t *ppdpt     = phys_to_virt(phys_pdpt & ~0xFFFULL);
@@ -361,6 +408,15 @@ static void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count)
             }
         }
     }
+
+    /* Register kernel pml4 */
+    asm volatile (
+        "mov %0, %%cr3"
+        ::"r"(kernel_mm.pml4)
+        : "memory"
+    );
+
+    LEAVEPROC();
 }
 
 /*
@@ -369,6 +425,8 @@ static void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count)
  */
 static void alloc_pages_used_by_kernel(void)
 {
+    ENTERPROC();
+
     phys_addr_t  begin = (phys_addr_t)&_kernel_phys_start;
     phys_addr_t  end   = _align_up(boot_allocator.tail, 0x1000);
 
@@ -376,13 +434,18 @@ static void alloc_pages_used_by_kernel(void)
     {
         alloc_specific_page(i);
     }
+
+    LEAVEPROC();
 }
 
 kresult_t init_memory(struct multiboot2_mmap_entry *entries, unsigned int count)
 {
+    ENTERPROC();
+
     init_phys(entries, count);
     init_kernel_mm(entries, count);
     alloc_pages_used_by_kernel();
 
+    LEAVEPROC();
     return 0;
 }

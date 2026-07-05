@@ -4,6 +4,7 @@
 #include <fynaos/mm.h>
 #include <multiboot2.h>
 #include <fynaos/string.h>
+#include <fynaos/kd.h>
 
 const char *multiboot2_tags[] = {
     "END",
@@ -39,6 +40,8 @@ extern phys_addr_t initial_pd;
 
 static void parse_loader_info(struct multiboot2_info *info)
 {
+    ENTERPROC();
+
     struct multiboot2_tag_header *header = (struct multiboot2_tag_header*)(info + 1);
 
     while (header->type)
@@ -50,10 +53,14 @@ static void parse_loader_info(struct multiboot2_info *info)
         }
         header = MULTIBOOT2_NEXT_TAG(header);
     }
+
+    LEAVEPROC();
 }
 
 __noreturn void kmain(uintptr_t info)
 {
+    ENTERPROC();
+
     (void)info;
     init_serial();
     init_interrupts();
@@ -76,4 +83,6 @@ __noreturn void kmain(uintptr_t info)
         / multiboot2_mmap->entry_size));
 
     halt_cpu_forever();
+
+    LEAVEPROC();
 }

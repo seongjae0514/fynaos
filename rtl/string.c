@@ -1,8 +1,11 @@
 #include <fynaos/types.h>
 #include <fynaos/kernel.h>
+#include <fynaos/kd.h>
 
 void *memset(void *dst, int val, size_t len)
 {
+    ENTERPROC();    
+
     char *a = dst;
 
     while (len--)
@@ -10,11 +13,14 @@ void *memset(void *dst, int val, size_t len)
         *a++ = (char)val;
     }
 
+    LEAVEPROC();
     return dst;
 }
 
 void *memcpy(void *dst, void *src, size_t len)
 {
+    ENTERPROC();
+
     char *d = dst, *s = src;
 
     while (len--)
@@ -22,5 +28,6 @@ void *memcpy(void *dst, void *src, size_t len)
         *d++ = *s++;
     }
 
+    LEAVEPROC();
     return dst;
 }

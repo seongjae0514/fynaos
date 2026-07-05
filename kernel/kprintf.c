@@ -1,6 +1,7 @@
 #include <fynaos/kernel.h>
 #include <fynaos/snprintf.h>
 #include <stdarg.h>
+#include <fynaos/kd.h>
 
 static void put_string(const char *s)
 {
