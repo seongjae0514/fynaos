@@ -58,10 +58,12 @@ C_SOURCES   := init/init.c        \
                mm/mm.c            \
                rtl/string.c       \
                kd/kd.c            \
-               mm/pool.c
+               mm/pool.c          \
+               kernel/sched.c
 
-ASM_SOURCES := boot/boot.asm            \
-               kernel/interrupt_asm.asm
+ASM_SOURCES := boot/boot.asm             \
+               kernel/interrupt_asm.asm  \
+               kernel/switch_context.asm
 
 OBJECTS     := $(addprefix bin/, $(C_SOURCES:.c=.o)) $(addprefix bin/, $(ASM_SOURCES:.asm=.o))
 

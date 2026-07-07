@@ -65,4 +65,27 @@ static inline __forceinline void outw(uint16_t port, uint16_t val)
     );
 }
 
+static inline __forceinline unsigned long save_and_disable_interrupts(void)
+{
+    unsigned long flags;
+
+    asm volatile (
+        "pushfq\n\t"
+        "pop %0\n\t"
+        "cli\n\t"
+        :"=r"(flags)
+    );
+
+    return flags;
+}
+
+static inline __forceinline void restore_interrupts(unsigned long flags)
+{
+    asm volatile (
+        "push %0\n\t"
+        "popfq\n\t"
+        ::"r"(flags)
+    );
+}
+
 #endif

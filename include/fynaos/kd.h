@@ -9,6 +9,7 @@
 #define FYNAOS_KD_H
 
 #include <fynaos/types.h>
+#include <fynaos/cpu.h>
 
 /*
  * NOTE: ENTERPROC(aka kd_enterproc) and LEAVEPROC(aka kd_leaveproc)
@@ -26,9 +27,16 @@ void kd_assert(boolean_t cond, const char *exp,
         kd_assert(cond, #cond, msg, __FILE__, __LINE__, __FUNCTION__)
 #define DPRINT(fmt, ...) \
         kprintf(fmt, ##__VA_ARGS__)
+#define INTERRUPT_DISABLED_ASSERT(msg)                                                        \
+        do {                                                                                  \
+            unsigned long flags = save_and_disable_interrupts();                                        \
+            kd_assert(!(flags & 0x200), "flags & 0x200", msg, __FILE__, __LINE__, __FUNCTION__); \
+            restore_interrupts(flags);                                                        \
+        } while (0)
 #else
 #define ASSERT(cond, msg)
 #define DPRINT(fmt, ...)
+#define INTERRUPT_DISABLED_ASSERT(msg)
 #endif /* DEBUG */
 
 #endif /* FYNAOS_KD_H */

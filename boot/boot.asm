@@ -180,6 +180,7 @@ _start_longmode:
 ;----------------------------------------------
 
 section .bss
+    global kernel_stack
 
 kernel_stack:
     resb 8192

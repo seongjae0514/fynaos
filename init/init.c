@@ -30,7 +30,6 @@ const char *multiboot2_tags[] = {
     "EFI 64-bit image handle",
     "Image load base address"
 };
-
 char bootloader_info[4096];
 struct multiboot2_info *multiboot2_info = (struct multiboot2_info*)bootloader_info;
 struct multiboot2_mmap *multiboot2_mmap = NULL;
@@ -47,6 +46,18 @@ void parse_loader_info()
             break;
         }
     }
+}
+
+static __noreturn void fn1(void)
+{
+    for (;;)
+    {
+        ticking();
+        kprintf("How are you?\n");
+        for (size_t i = 0; i < 100000000; i++);
+        schedule();
+    }
+    exit_task(0);
 }
 
 __noreturn void kmain(struct multiboot2_info *info)
@@ -81,7 +92,30 @@ __noreturn void kmain(struct multiboot2_info *info)
     /* init mm */
 
     init_memory(multiboot2_mmap->entries,
-                multiboot2_mmap->header.size / multiboot2_mmap->entry_size);
+                (unsigned int)(multiboot2_mmap->header.size - sizeof(struct multiboot2_mmap)) / multiboot2_mmap->entry_size);
+
+    /*
+     * Here is scheduling test code.
+     * Because there is no timer interrupt,
+     * they call schedule() and ticking() manually.
+     * 
+     * It looks like cooperative scheduler!
+     * Yes. But I want to make FYNAOS as preemptive.
+     * I'm going to make timer interrupts later. :)
+     */
+
+    init_sched();
+
+    struct task *t = create_kernel_task(fn1);
+
+    ready_task(t);
+
+    for (int i = 0; i < 100; i++)
+    {
+        schedule();
+        ticking();
+        kprintf("I'm good!\n");
+    }
 
     kprintf("Initialization succeed.\n");
     halt_cpu_forever();

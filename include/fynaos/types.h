@@ -62,6 +62,9 @@ typedef char boolean_t;
 
 #define _offsetof __builtin_offsetof
 
+#define _container_of(ptr, type, member) \
+    ((type *)((char *)(ptr) - _offsetof(type, member)))
+
 #define INVALID_PHYSICAL_ADDRESS (phys_addr_t)-1
 #define INVALID_VIRTUAL_ADDRESS  (phys_addr_t)-1
 
