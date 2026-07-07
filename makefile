@@ -36,9 +36,9 @@ CCFLAGS := -ffreestanding                  \
            -mcmodel=large                  \
            -mno-red-zone                   \
            -c                              \
-		   -Iinclude                       \
-		   -DDEBUG=1                       \
-		   -g                              \
+           -Iinclude                       \
+           -DDEBUG=1                       \
+           -g                              \
 
 LDFLAGS := -T linker.ld -nostdlib
 
@@ -94,7 +94,7 @@ bin/%.o: %.asm | bindirs
 #---------------------------------------
 
 clean:
-	rm -rf $(OBJECTS) fxoskrnl.elf
+	rm -rf bin/
 
 #---------------------------------------
 # ISO
