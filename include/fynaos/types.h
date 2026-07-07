@@ -79,5 +79,6 @@ typedef uint32_t kresult_t;
 
 #define __noreturn    __attribute__((noreturn))
 #define __forceinline __attribute__((always_inline))
+#define __fallthrough __attribute__((__fallthrough__))
 
 #endif /* _FYNAOS_TYPES_H */

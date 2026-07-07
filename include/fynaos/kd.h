@@ -20,24 +20,15 @@
 void kd_assert(boolean_t cond, const char *exp,
                const char *msg,
                const char *file, int line, const char *function);
-void kd_enterproc(const char *fn);
-void kd_leaveproc(void);
-void kd_print_callstack(void);
 
 #ifdef DEBUG
 #define ASSERT(cond, msg) \
         kd_assert(cond, #cond, msg, __FILE__, __LINE__, __FUNCTION__)
 #define DPRINT(fmt, ...) \
         kprintf(fmt, ##__VA_ARGS__)
-#define ENTERPROC() \
-        kd_enterproc(__FUNCTION__)
-#define LEAVEPROC() \
-        kd_leaveproc()
 #else
 #define ASSERT(cond, msg)
 #define DPRINT(fmt, ...)
-#define ENTERPROC()
-#define LEAVEPROC()
 #endif /* DEBUG */
 
 #endif /* FYNAOS_KD_H */

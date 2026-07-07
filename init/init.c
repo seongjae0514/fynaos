@@ -31,57 +31,58 @@ const char *multiboot2_tags[] = {
     "Image load base address"
 };
 
-char multiboot2_mmap_buffer[4096];
+char bootloader_info[4096];
+struct multiboot2_info *multiboot2_info = (struct multiboot2_info*)bootloader_info;
 struct multiboot2_mmap *multiboot2_mmap = NULL;
 
-extern phys_addr_t initial_pml4;
-extern phys_addr_t initial_pdpt;
-extern phys_addr_t initial_pd;
-
-static void parse_loader_info(struct multiboot2_info *info)
+void parse_loader_info()
 {
-    ENTERPROC();
-
-    struct multiboot2_tag_header *header = (struct multiboot2_tag_header*)(info + 1);
-
-    while (header->type)
+    for (struct multiboot2_tag_header *info = (struct multiboot2_tag_header *)(multiboot2_info + 1);
+         info->type != 0;
+         info = (struct multiboot2_tag_header *)(_align_up((uintptr_t*)info + info->size, 8)))
     {
-        if (header->type == MULTIBOOT2_TAG_MEMORY_MAP)
+        if (info->type == MULTIBOOT2_TAG_MEMORY_MAP)
         {
-            multiboot2_mmap = (struct multiboot2_mmap*)header;
+            multiboot2_mmap = (struct multiboot2_mmap*)info;
             break;
         }
-        header = MULTIBOOT2_NEXT_TAG(header);
     }
-
-    LEAVEPROC();
 }
 
-__noreturn void kmain(uintptr_t info)
+__noreturn void kmain(struct multiboot2_info *info)
 {
-    ENTERPROC();
-
-    (void)info;
     init_serial();
     init_interrupts();
 
+    kprintf("FYNAOS is initializing..\n");
+
     /* Check if the multiboot information is valid */
-    if (!info || info & 07)
+
+    if ((uintptr_t)info & 0x7 || !info)
     {
-        kernel_panic("boot failed: invalid multiboot information", 0);
+        kprintf("error: invalid bootloader information\n");
+        kernel_panic("boot failed.", PANIC_FLAG_SILENCE);
     }
 
-    /* Parse multiboot information */
-    parse_loader_info((struct multiboot2_info*)info);
+    /* Copy the information to the safe buffer */
 
-    memcpy(multiboot2_mmap_buffer, multiboot2_mmap, multiboot2_mmap->header.size);
+    if (info->totalsize >= sizeof(bootloader_info))
+    {
+        kprintf("error: bootloader information is too big\n");
+        kernel_panic("boot failed.", PANIC_FLAG_SILENCE);
+    }
 
-    /* Initialize mm with mmap information */
-    init_memory(
-        ((struct multiboot2_mmap*)multiboot2_mmap_buffer)->entries,
-        (unsigned int)((multiboot2_mmap->header.size - sizeof(struct multiboot2_tag_header))
-        / multiboot2_mmap->entry_size));
+    memcpy(multiboot2_info, info, info->totalsize);
 
+    /* Parse the multiboot2 information */
+
+    parse_loader_info();
+
+    /* init mm */
+
+    init_memory(multiboot2_mmap->entries,
+                multiboot2_mmap->header.size / multiboot2_mmap->entry_size);
+
+    kprintf("Initialization succeed.\n");
     halt_cpu_forever();
-    LEAVEPROC();
 }

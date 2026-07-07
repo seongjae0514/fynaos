@@ -9,8 +9,6 @@ struct idt_entry idt[IDT_COUNT] = { 0 };
 
 static void set_idt_entry(unsigned int index, uintptr_t routine, uint8_t attributes)
 {
-    ENTERPROC();
-
     struct idt_entry *entry = &idt[index];
 
     entry->attributes = attributes;
@@ -20,14 +18,10 @@ static void set_idt_entry(unsigned int index, uintptr_t routine, uint8_t attribu
     entry->isr_mid    = (uint16_t)((routine >> 16) & 0xFFFF);
     entry->isr_high   = (uint32_t)((routine >> 32) & 0xFFFFFFFF);
     entry->ist_offset = 0;
-
-    LEAVEPROC();
 }
 
 static void init_idt(void)
 {
-    ENTERPROC();
-
     struct idtr idtr;
 
     idtr.base  = (uintptr_t)idt;
@@ -37,14 +31,10 @@ static void init_idt(void)
         "lidt %0"
         :: "m"(idtr)
     );
-
-    LEAVEPROC();
 }
 
 void init_interrupts(void)
 {
-    ENTERPROC();
-
     init_idt();
 
     for (unsigned int i = 0; i < IDT_COUNT; i++)
@@ -57,8 +47,6 @@ void init_interrupts(void)
             IDT_ATTRIBUTE_TYPE_INTERRUPT_GATE
             );
     }
-
-    LEAVEPROC();
 }
 
 __noreturn void dispatch_interrupt(struct trap_frame *frame)
@@ -88,13 +76,8 @@ __noreturn void dispatch_interrupt(struct trap_frame *frame)
             );
 
         kprintf("Calling stack: \n\n");
-        kd_print_callstack();
-
         kernel_panic("interrupt not handled\n", PANIC_FLAG_SILENCE);
     }
-
-    kprintf("Calling stack: \n\n");
-        kd_print_callstack();
 
     kernel_panic("interrupt: not implemented", 0);
 }

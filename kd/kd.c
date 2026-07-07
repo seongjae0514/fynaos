@@ -26,54 +26,5 @@ void kd_assert(boolean_t cond, const char *exp,
          msg, exp, file, line, function
         );
 
-    kprintf("Calling stack:\n");
-    kd_print_callstack();
-    kprintf("\n");
-
     kernel_panic("kd: debug assertion failed", PANIC_FLAG_SILENCE);
-}
-
-void kd_enterproc(const char *fn)
-{
-#ifdef PRINT_CALL_STACK
-    DPRINT("Entering procedure: %s\n", fn);
-#endif
-
-    if (top < CALL_STACK_SIZE)
-    {
-        top++;
-        call_stack[top] = fn;
-    }
-    else
-    {
-        call_stack_overflowed = TRUE;
-    }
-}
-
-void kd_leaveproc(void)
-{
-#ifdef PRINT_CALL_STACK
-    DPRINT("Leaving procedure: %s\n", call_stack[top]);
-#endif
-
-    if (top < 0)
-    {
-        kernel_panic("kd: call stack underflow", 0);
-    }
-
-    top--;
-}
-
-void kd_print_callstack(void)
-{
-    kprintf("\nwarning: callstack have been overflowed.\n\n");
-
-    for (int i = 0; i <= top; i++)
-    {
-        kprintf(
-            "%d: %s\n",
-            i,
-            call_stack[i]
-            );
-    }
 }

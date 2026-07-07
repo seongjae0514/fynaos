@@ -12,7 +12,6 @@
 
 void init_serial(void)
 {
-    ENTERPROC();
     outb(COM1_INTERRUPT_ENABLE, (uint8_t)0);
     outb(COM1_LINE_CONTROL,     (uint8_t)0x80);
     outb(COM1_DATA,             (uint8_t)0x01);
@@ -20,7 +19,6 @@ void init_serial(void)
     outb(COM1_LINE_CONTROL,     (uint8_t)0x03);
     outb(COM1_FIFO_CONTROL,     (uint8_t)0xC7);
     outb(COM1_MODEM_CONTROL,    (uint8_t)0x0B);
-    LEAVEPROC();
 }
 
 void write_serial(char ch)

@@ -42,7 +42,7 @@ CCFLAGS := -ffreestanding                  \
 
 LDFLAGS := -T linker.ld -nostdlib
 
-ASFLAGS := -f elf64 -Iinclude
+ASFLAGS := -f elf64 -Iinclude -g
 
 #
 # Sources

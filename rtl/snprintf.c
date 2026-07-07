@@ -157,7 +157,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *format, va_list args)
 {
     const char *limit = buffer + length;
     char       *base  = buffer;
-    
+
     while (*format)
     {
         if (*format == '%')
@@ -292,27 +292,8 @@ size_t vsnprintf(char *buffer, size_t length, const char *format, va_list args)
                 break;
 
             case 'x':
-                flags |= HEX | LOWERCASE;
-
-                switch (len)
-                {
-                case LEN_HH:
-                case LEN_H:
-                case LEN_DEFAULT:
-                    buffer = print_number((uint64_t)va_arg(args, int), 0,
-                                          flags, width,
-                                          buffer, limit);
-                    break;
-                    
-                case LEN_L:
-                case LEN_LL:
-                    buffer = print_number((uint64_t)va_arg(args, long long), 0,
-                                          flags, width,
-                                          buffer, limit);
-                    break;
-                }
-                break;
-
+                flags |= LOWERCASE;
+                __fallthrough;
             case 'X':
                 flags |= HEX;
 
@@ -389,7 +370,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *format, va_list args)
                     buffer += 2;
                 }
 
-                buffer = print_number((uint64_t)va_arg(args, uint64_t), 0,
+                buffer = print_number((uint64_t)va_arg(args, void*), 0,
                                     flags, width,
                                     buffer, limit);
                 break;

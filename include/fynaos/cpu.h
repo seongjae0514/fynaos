@@ -57,7 +57,7 @@ static inline __forceinline void outb(uint16_t port, uint8_t val)
     );
 }
 
-static inline __forceinline void outw(int16_t port, int16_t val)
+static inline __forceinline void outw(uint16_t port, uint16_t val)
 {
     asm volatile (
         "outw %1, %0"

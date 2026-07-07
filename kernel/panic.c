@@ -4,8 +4,6 @@
 
 __noreturn void kernel_panic(const char *msg, unsigned int flags)
 {
-    ENTERPROC();
-
     disable_interrupts();
 
     if (!(flags & PANIC_FLAG_SILENCE))
@@ -25,6 +23,4 @@ __noreturn void kernel_panic(const char *msg, unsigned int flags)
     }
 
     halt_cpu_forever();
-
-    LEAVEPROC();
 }

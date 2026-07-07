@@ -27,11 +27,8 @@ struct pool *tail;
 
 static boolean_t divide(struct block *block, size_t data_len)
 {
-    ENTERPROC();
-
     if (GET_BLOCK_LEN(block->header) <= data_len + sizeof(struct block))
     {
-        LEAVEPROC();
         return FALSE;
     }
 
@@ -51,13 +48,11 @@ static boolean_t divide(struct block *block, size_t data_len)
         next->prev = block2;
     }
 
-    LEAVEPROC();
     return TRUE;
 }
 
 static void merge(struct block *block)
 {
-    ENTERPROC();
     struct block *first  = block;
     struct block *second = block->next;
 
@@ -68,13 +63,10 @@ static void merge(struct block *block)
     {
         second->next->prev = first;
     }
-    LEAVEPROC();
 }
 
 static void *allocate(struct block *first, size_t len)
 {
-    ENTERPROC();
-
     len = _align_up(len, 16);
 
     while (first)
@@ -90,7 +82,6 @@ static void *allocate(struct block *first, size_t len)
 
     if (!first || IS_BLOCK_USED(first->header))
     {
-        LEAVEPROC();
         return NULL;
     }
 
@@ -101,14 +92,11 @@ static void *allocate(struct block *first, size_t len)
 
     first->header |= BLOCK_USED;
 
-    LEAVEPROC();
     return first->data;
 }
 
 void kfree(void *addr)
 {
-    ENTERPROC();
-
     if (!addr)
     {
         return;
@@ -129,31 +117,24 @@ void kfree(void *addr)
     {
         merge(block->prev);
     }
-
-    LEAVEPROC();
 }
 
 static void init_single_pool(struct pool *pool, size_t len)
 {
-    ENTERPROC();
     pool->len           = len;
     pool->next          = NULL;
     pool->usage         = 0;
     pool->first->header = len - sizeof(struct pool);
     pool->first->next   = NULL;
     pool->first->prev   = NULL;
-    LEAVEPROC();
 }
 
 static boolean_t extend_pool(void)
 {
-    ENTERPROC();
-
     phys_addr_t page = alloc_page();
 
     if (page == INVALID_PHYSICAL_ADDRESS)
     {
-        LEAVEPROC();
         return FALSE;
     }
 
@@ -163,14 +144,11 @@ static boolean_t extend_pool(void)
     init_single_pool(tail->next, PAGE_SIZE);
     tail = tail->next;
 
-    LEAVEPROC();
     return TRUE;
 }
 
 void *kmalloc(size_t len)
 {
-    ENTERPROC();
-
     void        *addr;
     struct pool *pool = pools;
 
@@ -182,26 +160,20 @@ void *kmalloc(size_t len)
         {
             if (!extend_pool())
             {
-                LEAVEPROC();
                 return NULL;
             }
         }
         pool = pool->next;
     }
-
-    LEAVEPROC();
     return addr;
 }
 
 boolean_t init_pool(void)
 {
-    ENTERPROC();
-
     phys_addr_t page = alloc_page();
     
     if (page == INVALID_PHYSICAL_ADDRESS)
     {
-        LEAVEPROC();
         return FALSE;
     }
 
@@ -212,6 +184,5 @@ boolean_t init_pool(void)
 
     init_single_pool(pools, PAGE_SIZE);
     
-    LEAVEPROC();
     return TRUE;
 }
