@@ -39,6 +39,7 @@ CCFLAGS := -ffreestanding                  \
            -Iinclude                       \
            -DDEBUG=1                       \
            -g                              \
+           -MMD -MP
 
 LDFLAGS := -T linker.ld -nostdlib
 
@@ -82,6 +83,8 @@ bin/fxoskrnl.elf: $(OBJECTS)
 #---------------------------------------
 # Assemble/Compile
 #---------------------------------------
+
+-include $(OBJECTS:.o=.d)
 
 bin/%.o: %.c | bindirs
 	$(CC) $(CCFLAGS) $< -o $@
