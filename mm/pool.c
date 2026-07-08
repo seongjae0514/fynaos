@@ -149,6 +149,7 @@ static boolean_t extend_pool(void)
 
 void *kmalloc(size_t len)
 {
+    unsigned long flags = save_and_disable_interrupts();
     void        *addr;
     struct pool *pool = pools;
 
@@ -165,6 +166,7 @@ void *kmalloc(size_t len)
         }
         pool = pool->next;
     }
+    restore_interrupts(flags);
     return addr;
 }
 

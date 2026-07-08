@@ -34,6 +34,8 @@ char bootloader_info[4096];
 struct multiboot2_info *multiboot2_info = (struct multiboot2_info*)bootloader_info;
 struct multiboot2_mmap *multiboot2_mmap = NULL;
 
+uint64_t timer_tick;
+
 void parse_loader_info()
 {
     for (struct multiboot2_tag_header *info = (struct multiboot2_tag_header *)(multiboot2_info + 1);
@@ -48,20 +50,19 @@ void parse_loader_info()
     }
 }
 
-static __noreturn void fn1(void)
+__noreturn void fn(void)
 {
-    for (;;)
+    for (int i = 0; i < 10; i++)
     {
-        ticking();
-        kprintf("How are you?\n");
-        for (size_t i = 0; i < 100000000; i++);
-        schedule();
+        kprintf("task 1");
+        sleep_task(1000);
     }
     exit_task(0);
 }
 
 __noreturn void kmain(struct multiboot2_info *info)
 {
+    disable_interrupts();
     init_serial();
     init_interrupts();
 
@@ -89,34 +90,36 @@ __noreturn void kmain(struct multiboot2_info *info)
 
     parse_loader_info();
 
+    /* Initialize GDT */
+
+    init_gdt();
+
     /* init mm */
 
     init_memory(multiboot2_mmap->entries,
                 (unsigned int)(multiboot2_mmap->header.size - sizeof(struct multiboot2_mmap)) / multiboot2_mmap->entry_size);
 
-    /*
-     * Here is scheduling test code.
-     * Because there is no timer interrupt,
-     * they call schedule() and ticking() manually.
-     * 
-     * It looks like cooperative scheduler!
-     * Yes. But I want to make FYNAOS as preemptive.
-     * I'm going to make timer interrupts later. :)
-     */
+    /* Initialize IRQ and timer */
 
+    init_pic();
+    init_pit(100);
+
+    mask_pic_irq(0, TRUE);
+
+    /* Initialize scheduler */
+    
     init_sched();
 
-    struct task *t = create_kernel_task(fn1);
+    /* Start first kernel task */
 
-    ready_task(t);
+    ready_task(create_kernel_task(fn, 1));
 
-    for (int i = 0; i < 100; i++)
+    enable_interrupts();
+
+    for (;;)
     {
-        schedule();
-        ticking();
-        kprintf("I'm good!\n");
+        halt_cpu();
     }
 
-    kprintf("Initialization succeed.\n");
     halt_cpu_forever();
 }

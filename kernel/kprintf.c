@@ -13,6 +13,8 @@ static void put_string(const char *s)
 
 size_t kprintf(const char *fmt, ...)
 {
+    unsigned long flags = save_and_disable_interrupts();
+
     char    buffer[512];
     va_list args;
     size_t  len;
@@ -21,6 +23,8 @@ size_t kprintf(const char *fmt, ...)
     len = vsnprintf(buffer, sizeof(buffer), fmt, args);
     put_string(buffer);
 
+    restore_interrupts(flags);
+    
     va_end(args);
     return len;
 }

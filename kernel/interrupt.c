@@ -7,6 +7,8 @@ extern uintptr_t isr_vector_table[IDT_COUNT];
 
 struct idt_entry idt[IDT_COUNT] = { 0 };
 
+__noreturn void timer_interrupt(struct trap_frame *frame);
+
 static void set_idt_entry(unsigned int index, uintptr_t routine, uint8_t attributes)
 {
     struct idt_entry *entry = &idt[index];
@@ -35,8 +37,6 @@ static void init_idt(void)
 
 void init_interrupts(void)
 {
-    init_idt();
-
     for (unsigned int i = 0; i < IDT_COUNT; i++)
     {
         set_idt_entry(
@@ -47,37 +47,31 @@ void init_interrupts(void)
             IDT_ATTRIBUTE_TYPE_INTERRUPT_GATE
             );
     }
+
+    init_idt();
 }
 
 __noreturn void dispatch_interrupt(struct trap_frame *frame)
 {
-    (void)frame;
-
-    kprintf("int: %d\n", frame->vector);
-
-    if (frame->vector == 3)
+    switch (frame->vector)
     {
+    case 3:
         exit_interrupt(frame);
+
+    case 32:
+        timer_interrupt(frame);
+
+    default:
+        kprintf("Unhandled interrupt occured. vector=%u errorCode=%u",
+                frame->vector, frame->errcode);
+        kernel_panic("Unhandled interrupt", PANIC_FLAG_SILENCE);
     }
-    else if (frame->vector == 14)
-    {
-        void *p;
+}
 
-        asm volatile (
-            "mov %%cr2, %0"
-            :"=r"(p)
-        );
-
-        kprintf(
-            "!!! PAGE FAULT !!!\n"
-            "address=%016p\n"
-            "errorCode=%u\n\n",
-            p, frame->errcode
-            );
-
-        kprintf("Calling stack: \n\n");
-        kernel_panic("interrupt not handled\n", PANIC_FLAG_SILENCE);
-    }
-
-    kernel_panic("interrupt: not implemented", 0);
+__noreturn void timer_interrupt(struct trap_frame *frame)
+{
+    send_eoi(32);
+    timer_tick++;
+    sched_tick();
+    exit_interrupt(frame);
 }

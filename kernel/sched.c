@@ -10,50 +10,50 @@
 #include <fynaos/string.h>
 #include <fynaos/cpu.h>
 
-#define SCHED_COUNTER_BASE 1000000
+#define SCHED_COUNTER_BASE 10
 #define DEFAULT_STACK_SIZE 4096
-
-/*
- * Interrupt support is not available in this version.
- */
-
-#define enable_interrupts()
-#define disable_interrupts()
 
 struct task *current_task;
 struct task *ready_tasks;
 struct task *stopped_tasks;
 struct task *pending_tasks;
+struct task *sleeping_tasks;
+struct task *idle_task;
 
 extern struct context *switch_context(struct context *prev, struct context *next);
 
 /*
  * Switches current task to <task>.
- * Returns task that switched current context to this context.
+ * Returns task that switched to us.
  * 
  * Before this function, the interrupts are must be disabled.
  */
-struct task *switch_to(struct task *task)
+struct task *switch_to(struct task *next)
 {
     INTERRUPT_DISABLED_ASSERT("Interrupts are must be disabled");
     ASSERT(current_task != NULL, "current_task is NULL");
     if (!current_task) kernel_panic("current_task is NULL.", 0);
 
-    if (task == current_task)
-    {
-        return task;
-    }
+    struct task    *cur      = current_task;
+    struct context *last_ctx = NULL;
 
-    struct task    *prev = current_task;
-    struct context *last_ctx;
+    if (cur == next) return next;
 
-    current_task->state = TASK_READY;
-    current_task = task;
+    if (cur->state == TASK_RUNNING) cur->state = TASK_READY;
+    next->state = TASK_RUNNING;
+    swap_rsp0((uint64_t)next->kernel_stack + DEFAULT_STACK_SIZE);
 
-    last_ctx = switch_context(&prev->context, &task->context);
+    current_task = next;
 
-    current_task = prev;
-    current_task->state = TASK_RUNNING;
+    last_ctx = switch_context(&cur->context, &next->context);
+
+    /*
+     * So, you are back!
+     *
+     * The task that switched to us has already updated the scheduler
+     * state, so simply return the previous task.
+     */
+
     return _container_of(last_ctx, struct task, context);
 }
 
@@ -153,7 +153,7 @@ static void init_task(void)
     enable_interrupts();
 }
 
-struct task *create_kernel_task(void (*fn)(void) __noreturn)
+struct task *create_kernel_task(void (*fn)(void) __noreturn, uintptr_t priority)
 {
     struct task *task;
     phys_addr_t  stack_page;
@@ -179,6 +179,7 @@ struct task *create_kernel_task(void (*fn)(void) __noreturn)
     task->kernel_stack  = phys_to_virt(stack_page);
     task->user_stack    = NULL;
     task->mm            = NULL;
+    task->priority      = priority;
 
     /* Initialize task context */
 
@@ -204,7 +205,7 @@ static void __reset_task_counters(void)
 
     while (cur)
     {
-        cur->sched_counter = SCHED_COUNTER_BASE;
+        cur->sched_counter = cur->priority + SCHED_COUNTER_BASE;
         cur = cur->next;
     }
 }
@@ -226,7 +227,8 @@ retry:
 
     if (!ready_tasks)
     {
-        kernel_panic("Idle task is missing.", 0);
+        switch_to(idle_task);
+        return;
     }
 
     while (cur)
@@ -275,23 +277,76 @@ boolean_t init_sched(void)
 
     memset(idle, 0, sizeof(*idle));
 
+    idle->priority      = 0;
     idle->flags         = TASK_KERNEL | TASK_CRITICAL;
     idle->kernel_stack  = &kernel_stack;
     idle->sched_counter = SCHED_COUNTER_BASE;
     idle->state         = TASK_RUNNING;
     
-    ready_tasks = idle;
+    idle_task = idle;
 
     current_task = idle;
 
     return TRUE;
 }
 
-/*
- * This function is for test.
- * May be deleted, or may survibe with timer interrupt.
- */
-void ticking()
+void sched_tick(void)
 {
-    current_task->sched_counter--;
+    /* Wake sleeping tasks */
+
+    struct task *prv = NULL, *cur = sleeping_tasks, *next;
+
+    while (cur)
+    {
+        next = cur->next;
+        if (cur->wakeup_tick <= timer_tick)
+        {
+            if (!prv) sleeping_tasks = cur->next;
+            else      prv->next = cur->next;
+
+            cur->state = TASK_READY;
+
+            cur->next   = ready_tasks;
+            ready_tasks = cur;
+        }
+        else
+        {
+            prv = cur;
+        }
+        cur = next;
+    }
+
+    /* Scheduling */
+
+    if (current_task->sched_counter > 0) current_task->sched_counter--;
+    if (current_task->sched_counter == 0) schedule();
+}
+
+void sleep_task(unsigned long ms)
+{
+    if (ms < 10) return;
+    
+    unsigned long flags = save_and_disable_interrupts();
+
+    current_task->wakeup_tick = timer_tick + ms * 10;
+    current_task->state = TASK_SLEEPING;
+
+    struct task *cur = ready_tasks;
+    struct task *prv = NULL;
+    while (cur)
+    {
+        if (cur == current_task) break;
+        prv = cur;
+        cur = cur->next;
+    }
+    if (!cur) kernel_panic("Scheduling corrupted", 0);
+    if (!prv) ready_tasks = cur->next;
+    else      prv->next = cur->next;
+
+    current_task->next = sleeping_tasks;
+    sleeping_tasks = current_task;
+
+    schedule();
+
+    restore_interrupts(flags);
 }

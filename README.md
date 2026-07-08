@@ -13,8 +13,8 @@ FYNAOS is a learning-focused x86-64 operating system project.
 - [x] Virtual memory manager
 - [x] Kernel heap allocator
 - [x] Address space management
+- [x] Kernel scheduler
 - [ ] Handling IRQ with APIC
-- [ ] Kernel scheduler
 - [ ] User mode
 
 ## Build
@@ -49,7 +49,7 @@ Run with QEMU:
 ./runvm.sh
 ```
 
-Debug width QEMU and GDB:
+Debug with QEMU and GDB:
 
 ```bash
 ./runvm.sh debug

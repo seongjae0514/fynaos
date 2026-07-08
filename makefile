@@ -59,7 +59,10 @@ C_SOURCES   := init/init.c        \
                rtl/string.c       \
                kd/kd.c            \
                mm/pool.c          \
-               kernel/sched.c
+               kernel/sched.c     \
+               kernel/pic.c       \
+               kernel/timer.c     \
+               kernel/gdt.c
 
 ASM_SOURCES := boot/boot.asm             \
                kernel/interrupt_asm.asm  \

@@ -52,6 +52,12 @@ struct idtr
     uint64_t base;
 } __attribute__((packed));
 
+struct gdtr
+{
+    uint16_t limit;
+    uint64_t base;
+} __attribute__((packed));
+
 #define IDT_ATTRIBUTE_PRESENT                0x80
 
 #define IDT_ATTRIBUTE_PRIVILEGE_KERNELONLY   0x00
@@ -83,6 +89,8 @@ struct task
     unsigned int    flags;
     int             exit_code;
     uintptr_t       sched_counter;
+    uintptr_t       priority;
+    unsigned long   wakeup_tick;
 
     struct context  context;
     struct mm      *mm;
@@ -97,10 +105,20 @@ struct task
 #define TASK_PENDING    3
 #define TASK_READY      4
 #define TASK_RUNNING    5
+#define TASK_SLEEPING   6
 
 #define TASK_KERNEL     0x1
 #define TASK_USER       0x2
 #define TASK_CRITICAL   0x4
+
+#define SEGMENT_KERNEL_CODE 0x08
+#define SEGMENT_KERNEL_DATA 0x10
+#define SEGMENT_USER_CODE   0x20
+#define SEGMENT_USER_DATA   0x18
+#define SEGMENT_TSS         0x28
+
+extern struct task *current_task;
+extern uint64_t timer_tick;
 
 /*
  * Functions
@@ -115,11 +133,19 @@ __noreturn void exit_interrupt(struct trap_frame *frame);
 struct task *switch_to(struct task *task);
 __noreturn void exit_task(int code);
 boolean_t ready_task(struct task *task);
-struct task *create_kernel_task(void ( *fn)(void) __noreturn);
+struct task *create_kernel_task(void (*fn)(void) __noreturn, uintptr_t priority);
 void schedule(void);
 void reset_task_counters(void);
 void delete_task(struct task *task);
 boolean_t init_sched(void);
 void ticking();
+void init_pic(void);
+void mask_pic_irq(uint8_t irq, boolean_t allow);
+void init_pit(uint16_t freq);
+void send_eoi(uint8_t irq);
+uint64_t swap_rsp0(uint64_t s);
+void init_gdt(void);
+void sched_tick(void);
+void sleep_task(unsigned long ms);
 
 #endif
