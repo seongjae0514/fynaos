@@ -6,30 +6,6 @@
 #include <fynaos/string.h>
 #include <fynaos/kd.h>
 
-const char *multiboot2_tags[] = {
-    "END",
-    "Boot command line",
-    "Boot loader name",
-    "Modules",
-    "Basic memory information",
-    "BIOS Boot device",
-    "Memory map",
-    "VBE Information",
-    "Framebuffer information",
-    "ELF Symbols",
-    "APM Table",
-    "EFI 32-bit system table pointer",
-    "EFI 64-bit system table pointer",
-    "SMBIOS tables",
-    "ACPI RSDP v1",
-    "ACPI RSDP v2+",
-    "Networking information",
-    "EFI memory map",
-    "EFI boot services not terminated",
-    "EFI 32-bit image handle",
-    "EFI 64-bit image handle",
-    "Image load base address"
-};
 char bootloader_info[4096];
 struct multiboot2_info *multiboot2_info = (struct multiboot2_info*)bootloader_info;
 struct multiboot2_mmap *multiboot2_mmap = NULL;
