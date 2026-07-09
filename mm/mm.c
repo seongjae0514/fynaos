@@ -54,10 +54,15 @@ static void alloc_pfn_database(phys_addr_t limit)
         kernel_panic("Failed to boot: memory not enough", 0);
     }
 
-    memset(pfn_database, 0, pfn_database_len * sizeof(struct pfn));
+    for (size_t i = 0; i < pfn_database_len; i++)
+    {
+        pfn_database[i].flags    = PFN_RESERVED;
+        pfn_database[i].next     = NULL;
+        pfn_database[i].refcount = 0;
+    }
 }
 
-static void reserve_pfn_region(phys_addr_t addr, phys_addr_t limit)
+static void unreserve_pfn_region(phys_addr_t addr, phys_addr_t limit)
 {
     page_index_t begin = addr >> 12;
     page_index_t end   = limit >> 12;
@@ -69,7 +74,7 @@ static void reserve_pfn_region(phys_addr_t addr, phys_addr_t limit)
             break;
         }
 
-        pfn_database[begin].flags |= PFN_RESERVED;
+        pfn_database[begin].flags &= ~PFN_RESERVED;
     }
 }
 
@@ -158,17 +163,16 @@ static void init_phys(struct multiboot2_mmap_entry *entries, size_t count)
     }
 
     alloc_pfn_database(phys_limit);
-    /*
-     * Mark reserved memory regions
-     */
 
-    reserve_pfn_region(0, 0x100000);
+    /*
+     * Mark usable memory regions
+     */
 
     for (size_t i = 0; i < count; i++)
     {
-        if (entries[i].type != 1)
+        if (entries[i].type == 1)
         {
-            reserve_pfn_region(entries[i].addr, entries[i].addr + entries[i].len);
+            unreserve_pfn_region(entries[i].addr, entries[i].addr + entries[i].len);
         }
     }
 

@@ -6,7 +6,7 @@
 #define KERNEL_ADDRESS_BASE 0xFFFF800000000000
 #define PAGE_SIZE           4096
 
-#define PFN_RESERVED        0x00000001
+#define PFN_RESERVED        0x00000001U
 
 #define PML4_INDEX(addr)    (((uint64_t)(addr) >> 39) & 0x1FF)
 #define PDPT_INDEX(addr)    (((uint64_t)(addr) >> 30) & 0x1FF)
