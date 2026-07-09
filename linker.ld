@@ -20,8 +20,8 @@ SECTIONS
     .init : {
         *(.init*)
     }
-    _init_phys_end  = . + 0xFFFF800000000000;
-    _init_virt_end = .;
+    _init_virt_end  = . + 0xFFFF800000000000;
+    _init_phys_end = .;
 
     /*
      *  Higher-half address starts from here -- `.` points virtual address.
