@@ -324,11 +324,9 @@ void sched_tick(void)
 
 void sleep_task(unsigned long ms)
 {
-    if (ms < 10) return;
-    
     unsigned long flags = save_and_disable_interrupts();
 
-    current_task->wakeup_tick = timer_tick + ms / 10;
+    current_task->wakeup_tick = timer_tick + (ms + 9) / 10;
     current_task->state = TASK_SLEEPING;
 
     struct task *cur = ready_tasks;
