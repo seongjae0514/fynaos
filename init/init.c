@@ -54,7 +54,7 @@ __noreturn void fn(void)
 {
     for (int i = 0; i < 10; i++)
     {
-        kprintf("task 1");
+        kprintf("task 1\n");
         sleep_task(1000);
     }
     exit_task(0);

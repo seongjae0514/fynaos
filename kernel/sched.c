@@ -328,7 +328,7 @@ void sleep_task(unsigned long ms)
     
     unsigned long flags = save_and_disable_interrupts();
 
-    current_task->wakeup_tick = timer_tick + ms * 10;
+    current_task->wakeup_tick = timer_tick + ms / 10;
     current_task->state = TASK_SLEEPING;
 
     struct task *cur = ready_tasks;

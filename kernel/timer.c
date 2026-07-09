@@ -11,7 +11,7 @@
 
 void init_pit(uint16_t freq)
 {
-    uint16_t divisor = (uint16_t)FREQ / freq;
+    uint16_t divisor = (uint16_t)(FREQ / (uint32_t)freq);
 
     // Channel 0
     outb(0x43, 0x36);
