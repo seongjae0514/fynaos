@@ -22,6 +22,32 @@ struct task *idle_task;
 
 extern struct context *switch_context(struct context *prev, struct context *next);
 
+static void remove_task_from_list(struct task **list, struct task *task)
+{
+    struct task *cur  = *list;
+    struct task *prev = NULL;
+
+    while (cur)
+    {
+        if (cur == task) break;
+        prev = cur;
+        cur  = cur->next;
+    }
+
+    ASSERT(cur != NULL, "Cannot find the entry in the list.");
+
+    if (prev) prev->next = cur->next;
+    else      *list      = cur->next;
+
+    task->next = NULL;
+}
+
+static void insert_task_to_list(struct task **list, struct task *task)
+{
+    task->next = *list;
+    *list = task;
+}
+
 /*
  * Switches current task to <task>.
  * Returns task that switched to us.
@@ -73,24 +99,13 @@ __noreturn void exit_task(int code)
     current_task->state = TASK_TERMINATED;
     current_task->exit_code = code;
 
-    /* Remove current task from list */
+    /* Remove current task from ready list */
 
-    struct task *cur  = ready_tasks;
-    struct task *prev = NULL;
-
-    while (cur)
-    {
-        if (cur == current_task) break;
-        prev = cur;
-        cur = cur->next;
-    }
-
-    if (prev) prev->next  = cur->next;
-    else      ready_tasks = cur->next;
+    remove_task_from_list(&ready_tasks, current_task);
 
     /* Wake tasks wating for me up */
 
-    cur = current_task->waiting_for_me;
+    struct task *cur = current_task->waiting_for_me;
     
     while (cur)
     {
@@ -127,26 +142,9 @@ boolean_t ready_task(struct task *task)
     }
 
     unsigned long flags = save_and_disable_interrupts();
-    struct task *cur  = *list;
-    struct task *prev = NULL;
-
-    while (cur)
-    {
-        if (cur == task) break;
-
-        prev = cur;
-        cur  = cur->next;
-    }
-
-    if (prev)  prev->next = cur->next;
-    else      *list       = cur->next;
-
-    /* Insert task into the ready list */
-
-    task->next = ready_tasks;
-    ready_tasks = task;
-
-    /* Set task state */
+    
+    remove_task_from_list(list, task);
+    insert_task_to_list(&ready_tasks, task);
 
     task->state = TASK_READY;
 
@@ -203,8 +201,7 @@ struct task *create_kernel_task(void (*fn)(void) __noreturn, uintptr_t priority)
     /* Insert task into stopped tasks list */
 
     unsigned long flags = save_and_disable_interrupts();
-    task->next    = stopped_tasks;
-    stopped_tasks = task;
+    insert_task_to_list(&stopped_tasks, task);
     restore_interrupts(flags);
 
     return task;
@@ -341,20 +338,8 @@ void sleep_task(unsigned long ms)
     current_task->wakeup_tick = timer_tick + (ms + 9) / 10;
     current_task->state = TASK_SLEEPING;
 
-    struct task *cur = ready_tasks;
-    struct task *prv = NULL;
-    while (cur)
-    {
-        if (cur == current_task) break;
-        prv = cur;
-        cur = cur->next;
-    }
-    if (!cur) kernel_panic("Scheduling corrupted", 0);
-    if (!prv) ready_tasks = cur->next;
-    else      prv->next = cur->next;
-
-    current_task->next = sleeping_tasks;
-    sleeping_tasks = current_task;
+    remove_task_from_list(&ready_tasks, current_task);
+    insert_task_to_list(&sleeping_tasks, current_task);
 
     schedule();
 
@@ -368,25 +353,10 @@ int wait_for_task(struct task *task)
     current_task->next_waiting = task->waiting_for_me;
     task->waiting_for_me = current_task;
 
-    struct task *cur  = ready_tasks;
-    struct task *prev = NULL;
-
-    while (cur)
-    {
-        if (cur == current_task)
-        {
-            if (prev) prev->next  = cur->next;
-            else      ready_tasks = cur->next;
-            break;
-        }
-
-        cur  = cur->next;
-        prev = cur;
-    }
+    remove_task_from_list(&ready_tasks, current_task);
 
     current_task->state = TASK_PENDING;
-    current_task->next  = pending_tasks;
-    pending_tasks       = current_task;
+    insert_task_to_list(&pending_tasks, current_task);
 
     schedule();
 
