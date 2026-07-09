@@ -88,6 +88,17 @@ __noreturn void exit_task(int code)
     if (prev) prev->next  = cur->next;
     else      ready_tasks = cur->next;
 
+    /* Wake tasks wating for me up */
+
+    cur = current_task->waiting_for_me;
+    
+    while (cur)
+    {
+        struct task *next = cur->next_waiting;
+        ready_task(cur);
+        cur = next;
+    }
+
     /* Reschedule */
 
     schedule();
@@ -348,4 +359,37 @@ void sleep_task(unsigned long ms)
     schedule();
 
     restore_interrupts(flags);
+}
+
+int wait_for_task(struct task *task)
+{
+    unsigned long flags = save_and_disable_interrupts();
+
+    current_task->next_waiting = task->waiting_for_me;
+    task->waiting_for_me = current_task;
+
+    struct task *cur  = ready_tasks;
+    struct task *prev = NULL;
+
+    while (cur)
+    {
+        if (cur == current_task)
+        {
+            if (prev) prev->next  = cur->next;
+            else      ready_tasks = cur->next;
+            break;
+        }
+
+        cur  = cur->next;
+        prev = cur;
+    }
+
+    current_task->state = TASK_PENDING;
+    current_task->next  = pending_tasks;
+    pending_tasks       = current_task;
+
+    schedule();
+
+    restore_interrupts(flags);
+    return task->exit_code;
 }

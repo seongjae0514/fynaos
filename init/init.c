@@ -50,13 +50,22 @@ void parse_loader_info()
     }
 }
 
-__noreturn void fn(void)
+static struct task *task1 = NULL;
+static struct task *task2 = NULL;
+
+__noreturn void task1_proc(void)
 {
     for (int i = 0; i < 10; i++)
     {
         kprintf("task 1\n");
         sleep_task(1000);
     }
+    exit_task(0);
+}
+
+__noreturn void task2_proc(void)
+{
+    kprintf("task1 terminated with exit code %d.\n", wait_for_task(task1));
     exit_task(0);
 }
 
@@ -112,7 +121,8 @@ __noreturn void kmain(struct multiboot2_info *info)
 
     /* Start first kernel task */
 
-    ready_task(create_kernel_task(fn, 1));
+    ready_task(task1 = create_kernel_task(task1_proc, 1));
+    ready_task(task2 = create_kernel_task(task2_proc, 1));
 
     enable_interrupts();
 

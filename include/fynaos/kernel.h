@@ -97,6 +97,8 @@ struct task
     void           *kernel_stack;
     void           *user_stack;
 
+    struct task    *waiting_for_me;
+    struct task    *next_waiting;
     struct task    *next;
 };
 
@@ -147,5 +149,6 @@ uint64_t swap_rsp0(uint64_t s);
 void init_gdt(void);
 void sched_tick(void);
 void sleep_task(unsigned long ms);
+int wait_for_task(struct task *task);
 
 #endif
