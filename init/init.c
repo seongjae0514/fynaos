@@ -36,7 +36,7 @@ struct multiboot2_mmap *multiboot2_mmap = NULL;
 
 uint64_t timer_tick;
 
-void parse_loader_info()
+static void parse_loader_info(void)
 {
     for (struct multiboot2_tag_header *info = (struct multiboot2_tag_header *)(multiboot2_info + 1);
          info->type != 0;

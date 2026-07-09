@@ -140,7 +140,6 @@ void schedule(void);
 void reset_task_counters(void);
 void delete_task(struct task *task);
 boolean_t init_sched(void);
-void ticking();
 void init_pic(void);
 void mask_pic_irq(uint8_t irq, boolean_t allow);
 void init_pit(uint16_t freq);
