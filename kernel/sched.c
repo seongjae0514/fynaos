@@ -228,6 +228,7 @@ retry:
     if (!ready_tasks)
     {
         switch_to(idle_task);
+        restore_interrupts(flags);
         return;
     }
 
