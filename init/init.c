@@ -16,7 +16,7 @@ static void parse_loader_info(void)
 {
     for (struct multiboot2_tag_header *info = (struct multiboot2_tag_header *)(multiboot2_info + 1);
          info->type != 0;
-         info = (struct multiboot2_tag_header *)(_align_up((uintptr_t*)info + info->size, 8)))
+         info = (struct multiboot2_tag_header *)(_align_up((uintptr_t)info + info->size, 8)))
     {
         if (info->type == MULTIBOOT2_TAG_MEMORY_MAP)
         {
