@@ -71,6 +71,8 @@ struct task *switch_to(struct task *next)
 
     current_task = next;
 
+    swap_mm(current_task->mm);
+
     last_ctx = switch_context(&cur->context, &next->context);
 
     /*

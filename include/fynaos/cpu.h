@@ -3,6 +3,13 @@
 
 #include <fynaos/types.h>
 
+enum cpu_mode
+{
+    CPU_MODE_NONE,
+    CPU_MODE_KERNEL,
+    CPU_MODE_USER
+};
+
 static inline __forceinline void disable_interrupts(void)
 {
     asm volatile ("cli");
@@ -86,6 +93,11 @@ static inline __forceinline void restore_interrupts(unsigned long flags)
         "popfq\n\t"
         ::"r"(flags)
     );
+}
+
+static inline __forceinline void write_cr3(uintptr_t pml4)
+{
+    asm volatile ("mov %0, %%cr3"::"r"(pml4));
 }
 
 #endif

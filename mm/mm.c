@@ -21,6 +21,8 @@ struct mm                 kernel_mm        = { 0 };
 
 static struct boot_alloc  boot_allocator   = { 0 };
 
+struct mm                *current_mm       = NULL;
+
 static void init_boot_allocator(phys_addr_t base, size_t len)
 {
     boot_allocator.begin = base;
@@ -375,11 +377,7 @@ static void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count)
     }
 
     /* Register kernel pml4 */
-    asm volatile (
-        "mov %0, %%cr3"
-        ::"r"(kernel_mm.pml4)
-        : "memory"
-    );
+    write_cr3(kernel_mm.pml4);
 }
 
 /*
@@ -498,4 +496,34 @@ void map_kernel_for_user_mm(struct mm *mm)
 
     user_pml4[PML4_INDEX(KERNEL_ADDRESS_BASE)] =
         kernel_pml4[PML4_INDEX(KERNEL_ADDRESS_BASE)];
+}
+
+struct mm *create_mm(void)
+{
+    struct mm   *mm;
+    phys_addr_t  pml4_page;
+
+    if ((pml4_page = alloc_page()) == INVALID_PHYSICAL_ADDRESS)
+    {
+        return NULL;
+    }
+
+    if (!(mm = kmalloc(sizeof(struct mm))))
+    {
+        free_page(pml4_page);
+        return NULL;
+    }
+
+    zero_page(pml4_page);
+
+    mm->pml4 = pml4_page;
+
+    return mm;
+}
+
+void swap_mm(struct mm *mm)
+{
+    if (!current_mm || current_mm == mm) return;
+    current_mm = mm;
+    write_cr3(mm->pml4);
 }

@@ -60,5 +60,7 @@ boolean_t init_pool(void);
 boolean_t map_page(struct mm *mm, phys_addr_t frame, virt_addr_t page, uint32_t attr);
 phys_addr_t unmap_page(struct mm *mm, virt_addr_t page);
 void map_kernel_for_user_mm(struct mm *mm);
+struct mm *create_mm(void);
+void swap_mm(struct mm *mm);
 
 #endif
