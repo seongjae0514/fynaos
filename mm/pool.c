@@ -131,7 +131,7 @@ static void init_single_pool(struct pool *pool, size_t len)
 
 static boolean_t extend_pool(void)
 {
-    phys_addr_t page = alloc_page();
+    phys_addr_t page = alloc_frames(0);
 
     if (page == INVALID_PHYSICAL_ADDRESS)
     {
@@ -172,7 +172,7 @@ void *kmalloc(size_t len)
 
 boolean_t init_pool(void)
 {
-    phys_addr_t page = alloc_page();
+    phys_addr_t page = alloc_frames(0);
     
     if (page == INVALID_PHYSICAL_ADDRESS)
     {

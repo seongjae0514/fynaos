@@ -8,6 +8,7 @@ extern uintptr_t isr_vector_table[IDT_COUNT];
 struct idt_entry idt[IDT_COUNT] = { 0 };
 
 __noreturn void timer_interrupt(struct trap_frame *frame);
+__noreturn void page_fault(struct trap_frame *frame);
 
 static void set_idt_entry(unsigned int index, uintptr_t routine, uint8_t attributes)
 {
@@ -61,8 +62,11 @@ __noreturn void dispatch_interrupt(struct trap_frame *frame)
     case 32:
         timer_interrupt(frame);
 
+    case 14:
+        page_fault(frame);
+
     default:
-        kprintf("Unhandled interrupt occured. vector=%u errorCode=%u",
+        kprintf("Unhandled interrupt occured. vector=%u errorCode=%u\n",
                 frame->vector, frame->errcode);
         kernel_panic("Unhandled interrupt", PANIC_FLAG_SILENCE);
     }
@@ -74,4 +78,19 @@ __noreturn void timer_interrupt(struct trap_frame *frame)
     timer_tick++;
     sched_tick();
     exit_interrupt(frame);
+}
+
+__noreturn void page_fault(struct trap_frame *frame)
+{
+    virt_addr_t addr;
+
+    asm volatile ("mov %%cr2, %0":"=r"(addr));
+
+    kprintf("\n"
+            "!!! Page fault detected !!!\n"
+            "errorCode=%llu\n"
+            "address=%016p\n",
+            frame->errcode, addr);
+
+    kernel_panic("Unhandled exception: page fault", PANIC_FLAG_SILENCE);
 }

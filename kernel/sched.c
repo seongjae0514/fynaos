@@ -174,7 +174,7 @@ struct task *create_kernel_task(void (*fn)(void) __noreturn, uintptr_t priority)
         return NULL;
     }
 
-    if ((stack_page = alloc_page()) == INVALID_PHYSICAL_ADDRESS)
+    if ((stack_page = alloc_frames(0)) == INVALID_PHYSICAL_ADDRESS)
     {
         kfree(task);
         return NULL;

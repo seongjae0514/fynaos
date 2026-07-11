@@ -56,6 +56,9 @@ C_SOURCES   := init/init.c        \
                kernel/interrupt.c \
                kernel/panic.c     \
                mm/mm.c            \
+               mm/pmm.c           \
+               mm/vmm.c           \
+               mm/boot.c          \
                rtl/string.c       \
                kd/kd.c            \
                mm/pool.c          \

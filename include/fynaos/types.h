@@ -67,6 +67,7 @@ typedef char boolean_t;
 
 #define INVALID_PHYSICAL_ADDRESS (phys_addr_t)-1
 #define INVALID_VIRTUAL_ADDRESS  (phys_addr_t)-1
+#define INVALID_PAGE_INDEX       (page_index_t)-1
 
 /*
  * kernel result

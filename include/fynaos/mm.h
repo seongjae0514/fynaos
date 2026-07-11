@@ -5,8 +5,8 @@
 
 #define KERNEL_ADDRESS_BASE 0xFFFF800000000000
 #define PAGE_SIZE           4096
-
-#define PFN_RESERVED        0x00000001U
+#define PAGE_SHIFT          12
+#define PAGE_MASK           0xFFF
 
 #define PML4_INDEX(addr)    (((uint64_t)(addr) >> 39) & 0x1FF)
 #define PDPT_INDEX(addr)    (((uint64_t)(addr) >> 30) & 0x1FF)
@@ -14,53 +14,67 @@
 #define PT_INDEX(addr)      (((uint64_t)(addr) >> 12) & 0x1FF)
 #define PAGE_OFFSET(addr)   ((uint64_t)(addr) & 0xFFF)
 
-#define PAGE_PRESENT      (1ULL << 0)   // Present
-#define PAGE_WRITABLE     (1ULL << 1)   // Read/Write
-#define PAGE_USER         (1ULL << 2)   // User/Supervisor
-#define PAGE_PWT          (1ULL << 3)   // Page Write Through
-#define PAGE_PCD          (1ULL << 4)   // Page Cache Disable
-#define PAGE_ACCESSED     (1ULL << 5)   // Accessed
-#define PAGE_DIRTY        (1ULL << 6)   // Dirty (PTE only)
-#define PAGE_HUGE         (1ULL << 7)
-#define PAGE_PAT          (1ULL << 7)   // PAT (PTE), PS (PDE/PDPTE)
-#define PAGE_GLOBAL       (1ULL << 8)   // Global (PTE only)
-#define PAGE_NO_EXECUTE   (1ULL << 63)  // NX
+#define PAGE_PRESENT        (1ULL << 0)   // Present
+#define PAGE_WRITABLE       (1ULL << 1)   // Read/Write
+#define PAGE_USER           (1ULL << 2)   // User/Supervisor
+#define PAGE_PWT            (1ULL << 3)   // Page Write Through
+#define PAGE_PCD            (1ULL << 4)   // Page Cache Disable
+#define PAGE_ACCESSED       (1ULL << 5)   // Accessed
+#define PAGE_DIRTY          (1ULL << 6)   // Dirty (PTE only)
+#define PAGE_HUGE           (1ULL << 7)
+#define PAGE_PAT            (1ULL << 7)   // PAT (PTE), PS (PDE/PDPTE)
+#define PAGE_GLOBAL         (1ULL << 8)   // Global (PTE only)
+#define PAGE_NO_EXECUTE     (1ULL << 63)  // NX
 
-struct multiboot2_mmap_entry;
+#define FRAME_ALLOCATED     0x00000001
+#define FRAME_RESERVED      0x00000002
+#define FRAME_BAD           0x00000004
+
+#define FRAME_MAX_ORDER     11
+
+struct frame
+{
+    struct frame *next;
+    unsigned int  flags;
+    int           order;
+};
+
+struct phys_region
+{
+    phys_addr_t addr;
+    size_t      len;
+};
 
 struct mm
 {
-    phys_addr_t pml4;
+    uintptr_t pml4;
 };
 
-struct pfn
-{
-    struct pfn *next;
-    uint32_t    flags;
-    uint32_t    refcount;
-};
+struct multiboot2_mmap_entry;
 
-struct boot_alloc
-{
-    phys_addr_t begin;
-    phys_addr_t tail;
-    phys_addr_t limit;
-};
+void init_boot_alloc(phys_addr_t begin, phys_addr_t limit);
+void *alloc_boot_memory(size_t len, unsigned int align);
+void get_boot_memory_info(phys_addr_t *begin, size_t *len);
 
-kresult_t init_memory(struct multiboot2_mmap_entry *entries, unsigned int count);
-phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt);
-void alloc_specific_page(phys_addr_t addr);
-void free_page(phys_addr_t addr);
-phys_addr_t alloc_page(void);
-void *phys_to_virt(phys_addr_t phys);
+boolean_t init_frames(phys_addr_t limit);
+void unreserve_frame_region(page_index_t begin, page_index_t limit);
+void init_buddy_allocator(page_index_t begin, page_index_t limit);
+phys_addr_t alloc_frames(int order);
+void free_frame(phys_addr_t addr);
 void zero_page(phys_addr_t page);
+
+void *phys_to_virt(phys_addr_t phys);
 void kfree(void *addr);
-void *kmalloc(size_t len);
-boolean_t init_pool(void);
 boolean_t map_page(struct mm *mm, phys_addr_t frame, virt_addr_t page, uint32_t attr);
 phys_addr_t unmap_page(struct mm *mm, virt_addr_t page);
 void map_kernel_for_user_mm(struct mm *mm);
 struct mm *create_mm(void);
 void swap_mm(struct mm *mm);
+void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count);
+
+void *kmalloc(size_t len);
+boolean_t init_pool(void);
+
+boolean_t init_memory(struct multiboot2_mmap_entry *entries, size_t count);
 
 #endif
