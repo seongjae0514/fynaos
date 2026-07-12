@@ -73,6 +73,17 @@ ASM_SOURCES := boot/boot.asm             \
 
 OBJECTS     := $(addprefix bin/, $(C_SOURCES:.c=.o)) $(addprefix bin/, $(ASM_SOURCES:.asm=.o))
 
+#
+# Verbose
+#
+
+V ?= 0
+ifeq ($(V), 0)
+Q := @
+else
+Q := 
+endif
+
 #---------------------------------------
 # Build
 #---------------------------------------
@@ -86,7 +97,8 @@ all: bin/fxoskrnl.elf
 #---------------------------------------
 
 bin/fxoskrnl.elf: $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	@printf "LD  %s\n" "$@"
+	$(Q)$(LD) $(LDFLAGS) -o $@ $^
 
 #---------------------------------------
 # Assemble/Compile
@@ -95,28 +107,33 @@ bin/fxoskrnl.elf: $(OBJECTS)
 -include $(OBJECTS:.o=.d)
 
 bin/%.o: %.c | bindirs
-	$(CC) $(CCFLAGS) $< -o $@
+	@printf "CC  %s\n" "$@"
+	$(Q)$(CC) $(CCFLAGS) $< -o $@
 
 bin/%.o: %.asm | bindirs
-	$(AS) $(ASFLAGS) $< -o $@
+	@printf "AS  %s\n" "$@"
+	$(Q)$(AS) $(ASFLAGS) $< -o $@
 
 #---------------------------------------
 # Clean
 #---------------------------------------
 
 clean:
-	rm -rf bin/
+	$(Q)rm -rf bin/
 
 #---------------------------------------
 # ISO
 #---------------------------------------
 
-iso: bin/fxoskrnl.elf
-	./make-iso.sh $< bin/os.iso
+iso: bin/os.iso
+
+bin/os.iso: bin/fxoskrnl.elf
+	@printf "ISO %s\n" "$@"
+	$(Q)./make-iso.sh $< $@
 
 #---------------------------------------
 # Bin
 #---------------------------------------
 
 bindirs:
-	mkdir -p $(sort $(dir $(OBJECTS)))
+	$(Q)mkdir -p $(sort $(dir $(OBJECTS)))
