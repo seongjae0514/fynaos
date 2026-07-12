@@ -238,7 +238,7 @@ struct mm *create_mm(void)
 
 void swap_mm(struct mm *mm)
 {
-    if (!current_mm || current_mm == mm) return;
+    if (!mm || current_mm == mm) return;
     current_mm = mm;
     write_cr3(mm->pml4);
 }
