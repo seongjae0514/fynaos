@@ -100,4 +100,16 @@ static inline __forceinline void write_cr3(uintptr_t pml4)
     asm volatile ("mov %0, %%cr3"::"r"(pml4));
 }
 
+static inline __forceinline void cpuid(uint32_t leaf, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d)
+{
+    asm volatile(
+    "cpuid"
+    : "=a"(*a),
+      "=b"(*b),
+      "=c"(*c),
+      "=d"(*d)
+    : "a" (leaf)
+    );
+}
+
 #endif
