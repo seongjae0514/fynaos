@@ -6,7 +6,7 @@
 #define KERNEL_ADDRESS_BASE 0xFFFF800000000000
 #define PAGE_SIZE           4096
 #define PAGE_SHIFT          12
-#define PAGE_MASK           0xFFF
+#define PAGE_MASK           0xFFFU
 
 #define PML4_INDEX(addr)    (((uint64_t)(addr) >> 39) & 0x1FF)
 #define PDPT_INDEX(addr)    (((uint64_t)(addr) >> 30) & 0x1FF)
@@ -64,6 +64,7 @@ void free_frame(phys_addr_t addr);
 void zero_page(phys_addr_t page);
 
 void *phys_to_virt(phys_addr_t phys);
+phys_addr_t virt_to_phys(struct mm *mm, virt_addr_t virt);
 void kfree(void *addr);
 boolean_t map_page(struct mm *mm, phys_addr_t frame, virt_addr_t page, uint32_t attr);
 phys_addr_t unmap_page(struct mm *mm, virt_addr_t page);
@@ -71,6 +72,7 @@ void map_kernel_for_user_mm(struct mm *mm);
 struct mm *create_mm(void);
 void swap_mm(struct mm *mm);
 void init_kernel_mm(struct multiboot2_mmap_entry *entries, size_t count);
+void delete_mm(struct mm *mm);
 
 void *kmalloc(size_t len);
 boolean_t init_pool(void);

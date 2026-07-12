@@ -242,3 +242,22 @@ void swap_mm(struct mm *mm)
     current_mm = mm;
     write_cr3(mm->pml4);
 }
+
+static void free_page_table(phys_addr_t table, int level)
+{
+    phys_addr_t *pt = phys_to_virt(table);
+    for (int i = 0; i < 512; i++)
+    {
+        if (!(pt[i] & PAGE_PRESENT)) continue;
+        phys_addr_t child = pt[i] & ~PAGE_MASK;
+        if (level > 0) free_page_table(child, level - 1);
+        else free_frame(child);
+    }
+    free_frame(table);
+}
+
+void delete_mm(struct mm *mm)
+{
+    free_page_table(mm->pml4, 3);
+    kfree(mm);
+}

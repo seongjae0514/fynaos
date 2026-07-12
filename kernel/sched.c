@@ -268,9 +268,25 @@ retry:
 
 void delete_task(struct task *task)
 {
-    /* Not implemented */
-    (void)task;
-    return;
+    if (task->state != TASK_TERMINATED)
+    {
+        kernel_panic("Trying to delete not terminated task", 0);
+    }
+
+    if (task->kernel_stack)
+    {
+        free_frame(virt_to_phys(NULL, (virt_addr_t)task->kernel_stack));
+    }
+
+    if (task->user_stack)
+    {
+        free_frame(virt_to_phys(task->mm, (virt_addr_t)task->user_stack));
+    }
+
+    if (task->mm)
+    {
+        delete_mm(task->mm);
+    }
 }
 
 extern uint8_t kernel_stack;
