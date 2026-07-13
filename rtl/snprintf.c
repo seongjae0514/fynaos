@@ -224,6 +224,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *format, va_list args)
             switch (*format)
             {
             case 's':
+            {
                 const char *str = va_arg(args, const char *);
 
                 while (*str)
@@ -236,6 +237,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *format, va_list args)
                     str++;
                 }
                 break;
+            }
 
             case 'c':
                 if (buffer + 1 < limit)

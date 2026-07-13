@@ -230,7 +230,7 @@ void reset_task_counters(void)
 void schedule(void)
 {
     unsigned long  flags   = save_and_disable_interrupts();
-retry:
+retry:;
     struct task   *cur     = ready_tasks;
     struct task   *next    = NULL;
     unsigned long  counter = 0;

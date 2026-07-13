@@ -52,7 +52,7 @@ struct multiboot2_mmap
     uint32_t                     entry_size;
     uint32_t                     entry_version;
     struct multiboot2_mmap_entry entries[];
-};
+} __attribute__((packed));
 
 #define MULTIBOOT2_NEXT_TAG(p) \
         (struct multiboot2_tag_header*)_align_up(((uintptr_t)(p) + (uintptr_t)(p->size)), 8)

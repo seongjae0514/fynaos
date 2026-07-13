@@ -30,8 +30,9 @@ CCFLAGS := -ffreestanding                  \
            -Wconversion                    \
            -Wsign-conversion               \
            -Wundef                         \
-           -Wcast-align                    \
+           -Wno-cast-align                 \
            -Wstrict-prototypes             \
+           -Wno-address-of-packed-member   \
            -m64                            \
            -mcmodel=large                  \
            -mno-red-zone                   \

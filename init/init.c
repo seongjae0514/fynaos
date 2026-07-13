@@ -26,7 +26,7 @@ static void parse_loader_info(void)
     }
 }
 
-static __noreturn void child_routine()
+static __noreturn void child_routine(void)
 {
     for (int i = 1; i <= 10; i++)
     {
@@ -36,7 +36,7 @@ static __noreturn void child_routine()
     exit_task(0);
 }
 
-static __noreturn void task_routine()
+static __noreturn void task_routine(void)
 {
     struct task *task = create_kernel_task(child_routine, 0);
     int exit_code;
