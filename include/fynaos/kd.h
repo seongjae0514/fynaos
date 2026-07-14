@@ -11,13 +11,6 @@
 #include <fynaos/types.h>
 #include <fynaos/cpu.h>
 
-/*
- * NOTE: ENTERPROC(aka kd_enterproc) and LEAVEPROC(aka kd_leaveproc)
- *       must not be called in serial printing helper functions. (ex. kprintf)
- *       Because kd_enterproc and kd_leaveproc call kprintf.
- *       It will cause stack overflow!
- */
-
 void kd_assert(boolean_t cond, const char *exp,
                const char *msg,
                const char *file, int line, const char *function);
