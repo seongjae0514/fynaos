@@ -66,7 +66,8 @@ C_SOURCES   := init/init.c        \
                kernel/sched.c     \
                kernel/pic.c       \
                kernel/timer.c     \
-               kernel/gdt.c
+               kernel/gdt.c       \
+               kernel/wait.c
 
 ASM_SOURCES := boot/boot.asm             \
                kernel/interrupt_asm.asm  \

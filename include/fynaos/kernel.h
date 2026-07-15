@@ -82,24 +82,29 @@ struct context
 
 struct mm;
 
+struct waitable_header
+{
+    struct task *waiting;
+};
+
 struct task
 {
-    unsigned int    id;
-    unsigned int    state;
-    unsigned int    flags;
-    int             exit_code;
-    uintptr_t       sched_counter;
-    uintptr_t       priority;
-    unsigned long   wakeup_tick;
+    struct waitable_header  joining_tasks;
+    unsigned int            id;
+    unsigned int            state;
+    unsigned int            flags;
+    int                     exit_code;
+    uintptr_t               sched_counter;
+    uintptr_t               priority;
+    unsigned long           wakeup_tick;
 
-    struct context  context;
-    struct mm      *mm;
-    void           *kernel_stack;
-    void           *user_stack;
+    struct context          context;
+    struct mm              *mm;
+    void                   *kernel_stack;
+    void                   *user_stack;
 
-    struct task    *waiting_for_me;
-    struct task    *next_waiting;
-    struct task    *next;
+    struct task            *next_waiting;
+    struct task            *next;
 };
 
 #define TASK_TERMINATED 1
@@ -121,6 +126,8 @@ struct task
 
 extern struct task *current_task;
 extern uint64_t timer_tick;
+extern struct task *ready_tasks;
+extern struct task *pending_tasks;
 
 /*
  * Functions
@@ -149,5 +156,7 @@ void init_gdt(void);
 void sched_tick(void);
 void sleep_task(unsigned long ms);
 int wait_for_task(struct task *task);
+void wait_for_waitable_header(struct waitable_header *header);
+void wake_waiting_tasks(struct waitable_header *header);
 
 #endif

@@ -107,14 +107,7 @@ __noreturn void exit_task(int code)
 
     /* Wake tasks wating for me up */
 
-    struct task *cur = current_task->waiting_for_me;
-    
-    while (cur)
-    {
-        struct task *next = cur->next_waiting;
-        ready_task(cur);
-        cur = next;
-    }
+    wake_waiting_tasks(&current_task->joining_tasks);
 
     /* Reschedule */
 
@@ -367,17 +360,8 @@ void sleep_task(unsigned long ms)
 int wait_for_task(struct task *task)
 {
     unsigned long flags = save_and_disable_interrupts();
-
-    current_task->next_waiting = task->waiting_for_me;
-    task->waiting_for_me = current_task;
-
-    remove_task_from_list(&ready_tasks, current_task);
-
-    current_task->state = TASK_PENDING;
-    insert_task_to_list(&pending_tasks, current_task);
-
+    wait_for_waitable_header(&task->joining_tasks);
     schedule();
-
     restore_interrupts(flags);
     return task->exit_code;
 }
