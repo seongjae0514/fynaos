@@ -86,4 +86,10 @@ typedef uint32_t kresult_t;
 #define __fallthrough __attribute__((__fallthrough__))
 #define __align(n)    __attribute__((aligned(n)))
 
+/*
+ * Security
+ */
+
+typedef unsigned int uid_t, gid_t;
+
 #endif /* _FYNAOS_TYPES_H */
