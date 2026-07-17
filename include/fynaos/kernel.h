@@ -120,8 +120,8 @@ struct task
 
 #define SEGMENT_KERNEL_CODE 0x08
 #define SEGMENT_KERNEL_DATA 0x10
-#define SEGMENT_USER_CODE   0x20
-#define SEGMENT_USER_DATA   0x18
+#define SEGMENT_USER_CODE   0x23
+#define SEGMENT_USER_DATA   0x1b
 #define SEGMENT_TSS         0x28
 
 extern struct task *current_task;
@@ -158,5 +158,6 @@ void sleep_task(unsigned long ms);
 int wait_for_task(struct task *task);
 void wait_for_waitable_header(struct waitable_header *header);
 void wake_waiting_tasks(struct waitable_header *header);
+__noreturn void switch_to_user(void *user_start, void *user_stack);
 
 #endif
